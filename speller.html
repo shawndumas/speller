@@ -1,0 +1,84 @@
+<html>
+<head>
+    <title></title>
+    <script src="speller.js"></script>
+    <style>
+        .squiggle {
+            background-image: url(data:image/gif;base64,R0lGODlhBAAOAJEAAAAAAP////8AAP///yH5BAEAAAMALAAAAAAEAA4AAAIJnI+pyyg+XkwFADs=);
+            background-repeat: repeat-x;
+            background-position: left bottom;
+            padding-bottom: 2px;
+            vertical-align: text-top;
+            font-style: italic;
+        }
+        #container {
+            width: 50%;
+            padding: 50px;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+    <input type="button" id="check" value="Spell Check" /><br />
+    <textarea id="content" rows="10" cols="200">In the past week, two friends (Dean and Bill) independently told me they were amazed at how Google does spelling correction so well and quickly. Type in a search like [speling] and Google comes back in 0.1 seconds or so with Did you mean: spelling. (Yahoo and Microsoft are similar.) What surprised me is that I thought Dean and Bill, being highly accomplished engeneers and mathematicians, would have good intuitions about statistical languge processing problems such as spelling correction. But they didn't, and come to think of it, there's no reason they should: it was my expectations that were faulty, not their knowledge.
+
+I figured they and many others could benifit from an explanation. The full details of an industrial-strength spell corrector are quite complex. What I wanted to do here is to develop, in less than a page of code, a toy spelling corrector that acheve 80 or 90% accuracy at a processing speed of at least 10 words per second. (Here's another error for you: supposidly.)</textarea>
+    <div id="container"></div>
+    <script>
+        var button = document.getElementById('check'),
+            content = document.getElementById('content'),
+            container = document.getElementById('container'),
+            words = function (text) {
+                var regex = /[A-Za-z]+/g,
+                    match = {},
+                    words = [];
+
+                while (match = regex.exec(text)) {
+                    words.push(match[0]);
+                }
+
+                return words;
+            },
+            enliven = function () {
+                Array.prototype.slice.call(document.querySelectorAll('.squiggle')).forEach(function (elm) {
+                    elm.addEventListener('click', function () {
+                        var word = speller.correct(elm.innerText),
+                            isSame = !!(elm.innerText === word);
+
+                        if (confirm((isSame ? 'I do not understand "' : 'Did you mean "') + word + (isSame ? '".' : '"?'))) {
+                            elm.innerText = word;
+                            elm.className = elm.className.replace(/(?:^|\s)squiggle(?!\S)/, '');
+                        }
+                    });
+                });
+                document.getElementById('done').addEventListener('click', function () {
+                    content.value = container.innerText.replace(/\n/, '');
+                    container.innerHTML = '';
+                });
+            },
+            wrapWord = function (word) {
+                return '<span class="squiggle">' + word + '</span>';
+            };
+
+        button.addEventListener('click', function () {
+            var text = content.value,
+                allWords = words(content.value),
+                mistakes = [],
+                done = '<input type="button" id="done" value="Done" /><br />';
+
+            allWords.forEach(function (word) {
+                var lowerCaseWord = word.toLowerCase(),
+                    checkedWord = speller.correct(lowerCaseWord),
+                    isNotSame = !!(lowerCaseWord !== checkedWord);
+
+                (isNotSame) && (mistakes.push({ 'word': word, 'span': wrapWord(word) }));
+            });
+            mistakes.forEach(function (mistake) {
+                text = text.replace(mistake.word, mistake.span);
+            });
+            container.innerHTML = done + text.replace(/\n/, '<br /><br />');
+            enliven();
+        });
+    </script>
+</body>
+</html>
